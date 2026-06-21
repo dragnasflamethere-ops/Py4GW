@@ -634,15 +634,19 @@ class NoAttribute:
                 Range.Nearby.value < distance <= Range.Compass.value
                 for distance in spirit_distances
             )
+            should_heal = len(spirits) > 1 and any(
+                Agent.GetHealth(spirit_id) < 0.5 for spirit_id in spirits
+            )
             mode_label = "aggro-nearby"
         else:
             should_reposition = any(
                 Range.Spirit.value < distance <= Range.Compass.value
                 for distance in spirit_distances
             )
+            should_heal = False
             mode_label = "ooc-compass"
 
-        if not should_reposition:
+        if not (should_reposition or should_heal):
             nearest_distance = min(spirit_distances) if spirit_distances else 0.0
             farthest_distance = max(spirit_distances) if spirit_distances else 0.0
             self.build._debug(
@@ -658,10 +662,10 @@ class NoAttribute:
             f"Summon Spirits trigger: owned core spirit is beyond spirit range (mode={mode_label})",
             True,
         )
-        precheck_failure = self.build._get_can_cast_skill_failure_reason(skill_id)
-        if precheck_failure is not None:
-            self.build._debug(f"Summon Spirits precheck blocked: reason={precheck_failure}", True)
-            return False
+        # precheck_failure = self.build._get_can_cast_skill_failure_reason(skill_id)
+        # if precheck_failure is not None:
+        #     self.build._debug(f"Summon Spirits precheck blocked: reason={precheck_failure}", True)
+        #     return False
 
         result = (yield from self.build.CastSkillID(
             skill_id=skill_id,
